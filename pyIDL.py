@@ -2,6 +2,7 @@
 # This is an experimental program, use with discretion.
 # Author: Gaeron Friedrichs gaeron@vt.edu
 # Advisor: Dr. Scott Bailey
+# Updated: 7.15.18
 
 def has(line, statement): return line.find(statement) != -1
 def isFor(line): return line.lstrip().find("for") == 0
