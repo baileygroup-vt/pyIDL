@@ -3,20 +3,48 @@
 # Author: Gaeron Friedrichs gaeron@vt.edu
 # Advisor: Dr. Scott Bailey
 # Updated: 7.15.18
+#----------------------------------------------------------#
 
+# Determines whether a line contains a given statement
 def has(line, statement): return line.find(statement) != -1
+
+# Determines whether a line is a for loop
 def isFor(line): return line.lstrip().find("for") == 0
+
+# Determines whether the given statement is an IDL comment
 def isIDLComment(line): return line.lstrip().find(";") == 0
+
+# Determines whether the given statement is a python comment
 def isPythonComment(line): return line.lstrip().find("#") == 0
+
+# Determines whether the given statement has a python comment
 def hasPythonComment(line): return line.find("#") != -1
+
+# Determines whether the given statement has an IDL comment
 def hasIDLComment(line): return line.find(";") != -1
+
+# Determines if statement 1 is before statement 2 if statement 1 is in the line
 def isBefore(line, statement1, statement2): return (line.find(statement1) < line.find(statement2)) and (line.find(statement1) != -1)
+
+# Strips away the python comment from a line
 def getPyCommentless(line): return line.split("#")[0]
+
+# Strips away everything but the python comment from a line
 def getPyComment(line): return line.split("#")[len(line.split("#")) - 1] if hasPythonComment(line) else ""
+
+# Converts comment from IDL to python
 def convertComments(line): return line.replace(";", "#")
+
+# Add leading whitespace
 def addLeadingWhitespace(line, whitespace): return (4*whitespace)*" " + line
+
+# Removes variable from a line containing an equals sign
 def getVariable(line): return line.split("=")[0].strip()
+
+# Determines if an expression given is a variable
 def isVar(expression): return (len(expression.split(" ")) == 1 and len(expression.split("[")) == 1)
+
+# Converts the IDL style equality operators to Python
 def convertEqualityOperators(line):
     if isBefore(line, " gt ", ";") or not hasIDLComment(line): line = line.replace(" gt ", " > ")
     if isBefore(line, " lt ", ";") or not hasIDLComment(line): line = line.replace(" lt ", " < ")
@@ -25,14 +53,20 @@ def convertEqualityOperators(line):
     if isBefore(line, " ge ", ";") or not hasIDLComment(line): line = line.replace(" ge ", " >= ")
     if isBefore(line, " ne ", ";") or not hasIDLComment(line): line = line.replace(" ne ", " != ")
     return line
+
+# Removes IDL end statements
 def removeEndStatements(line):
     line = line.replace("endif", "")
     line = line.replace("endfor", "")
     return line
+
+# Replaces IDL then statements to colons
 def convertThenStatements(line, whitespace):
+    # Then begin case:
     if isBefore(line, "then begin", ";") or not hasIDLComment(line):     
         line = line.replace(" then begin ", ":")
         line = line.replace("then begin", ":")
+    # Then stop case:
     if (isBefore(line, "then stop", ";") or not hasIDLComment(line)) and has(line, "then stop"):
         line = line.replace("\n", "")
         line = line.replace("," , " ", 1)
@@ -45,31 +79,37 @@ def convertThenStatements(line, whitespace):
         else:
             extension = ""
         line = line.replace("then stop", ":\n" + ((4*whitespace + 4))*" "+ "print(\"") + extension
-        # Figure this out
-    #if isBefore(line, "then", ";") or not hasIDLComment(line):
-    #    line = line.replace(" then ",":\n" + ((4*whitespace + 4))*" ")
-    #    line = line.replace("then",":\n" + ((4*whitespace + 4))*" ")
+    # Then case:
     if isBefore(line, "then", ";") or not hasIDLComment(line):
         line = line.replace(" then ", ": ")
         line = line.replace("then", ": ")
+    # Do begin case:
     if isBefore(line, "do begin", ";") or not hasIDLComment(line):
         line = line.replace(" do begin ", ":")
         line = line.replace("do begin", ":" )
     return line
+
+# Convert an IDL for loop to Python for Loop
 def convertFor(line):
-    line = line.replace("for", "")
+    line = line.replace("for", "") # strip away the for and colon
     line = line.replace(":", "")
-    components = line.split(",")
+    components = line.split(",") # break the line down into its components
+    # 2 Parameter For Loop Case:
     if len(components) == 2:
+        # Extract the components individually
         variable = components[0].split("=")
         variable_name = variable[0].strip()
         variable_start = variable[1].strip()
         variable_end = components[1].strip()
+        #Rewrite in python format
         line = "for " + variable_name + " in range(" + variable_start + ", " + variable_end + "+1):\n"
-        line = line.replace("-1+1", "")
+        line = line.replace("-1+1", "") #accomodate any index magic
         return line, variable_name
+    # Non 2 parameter for loop case:
     else:
         return line + "# ADD FUNCTIONALITY", None
+
+# Convert IDL math functions to numpy and python syntax
 def convertMath(line):
     line = line.replace("exp(", "numpy.exp(")
     line = line.replace("alog10(", "numpy.log10(")
@@ -80,24 +120,34 @@ def convertMath(line):
     line = line.replace("fltarr(", "numpy.zeroes(")
     line = line.replace("^", "**")
     return line
+
+# Covert parenthesis to brackets for first layer of index conversion    
 def convertIndicies(line, variables):
     for variable in variables:
         line = line.replace("(" + variable.strip() + ")", "[" + variable.strip() + "]")
     return line
+
+# Convert and/or gate functions     
 def convertGate(line):
     line = line.replace(" and ", " & ")
     line = line.replace(" or ", " | ")
     return line
+
+# Expands single line variable declaration to multi line
 def singleToMulti(line, whitespace):
-    without_Comment = getPyCommentless(line)
+    without_Comment = getPyCommentless(line) #removes the comment
+    # Checks if it is multii line variable declaration format
     if (len(without_Comment.split("=")) == len(without_Comment.split("&")) + 1) and len(without_Comment.split("&")) != 1:
-        chunks = without_Comment.split("&")
-        comment = getPyComment(line)
-        line = chunks.pop(0) + "\n"
+        chunks = without_Comment.split("&") # Extracts all variable declarations
+        comment = getPyComment(line) # Extracts original comment
+        line = chunks.pop(0) + "\n"  # Add the first declaration
+        # Add all the remaining declarations
         for declaration in chunks:
             line = line + (4*whitespace)*" " + declaration.strip() + "\n"
-        line = line + (4*whitespace)*" " + "#" + comment
+        line = line + (4*whitespace)*" " + "#" + comment # Add back in the comment
     return line
+
+# Extracts scientific notation from IDL statements
 def extractSci(line, loc):
     root_bool = False
     exp_bool = False
@@ -128,6 +178,8 @@ def extractSci(line, loc):
                 break  
 
     return (root_bool and exp_bool), str(root), str(exp), root_loc, exp_loc
+
+# Converts scientific notation
 def convertScientificNotation(line):
     index = 0
     # Loop through the entire line
@@ -145,6 +197,8 @@ def convertScientificNotation(line):
                 line = line.replace(line[root_loc+1:exp_loc-1], " (" + root+"e"+exp + ") ")
         index = loc + 1
     return line    
+
+# Replace IDL's keyword set functionality
 def replaceKeywordSet(line):
     keyword_loc = line.find("keyword_set")
     close_loc = line.find(")", keyword_loc)
@@ -152,6 +206,8 @@ def replaceKeywordSet(line):
     if (not_loc == keyword_loc - 4) and (not_loc != -1): line = line[:not_loc] + line[not_loc+4:close_loc] + " is not None" + line[close_loc:]
     else: line = line[:close_loc] + " is None" + line[close_loc:] 
     return line.replace("keyword_set", "")
+
+# Determines the end parenthesis given a line (for where conversion)
 def findZeroCrossing(line):
     starting_index = line.find("where")
     index = starting_index + len("where")
@@ -166,6 +222,8 @@ def findZeroCrossing(line):
         index = index + 1
 
     return -1
+
+# Converts IDL's where functionality 
 def convertWhere(line, whitespace):
     flag = False
     extension = None
@@ -195,6 +253,8 @@ def convertWhere(line, whitespace):
     if flag: line = line.replace(","+extension, "") + (4*whitespace)*" " + extension.strip() + " = len(" + variable + ")\n"
   
     return line.replace("where", "")
+
+# Main driver for line conversion
 def convertLine(line, flag, offset, last_white, original, variables):
     temp_line = line    # This is just to save a copy of our original line
     more_var = None     # Default to no additional variables
@@ -233,6 +293,7 @@ def convertLine(line, flag, offset, last_white, original, variables):
     return line, whitespace, return_original, variables
 #def hasNoPrev(var, line):
 
+# Determine if its only a variable rather than method
 def isOnlyVar(var, line):
     if getPyCommentless(line).find(var) == -1: return False
     location = -1
@@ -254,8 +315,9 @@ def isOnlyVar(var, line):
             return True
 
     return False
-def bracketize(line, var):
 
+# Changes parenthesis to brackets thouroughly
+def bracketize(line, var):
     loc = -1
     locations = []
     while True:
@@ -272,18 +334,24 @@ def bracketize(line, var):
             index = index + 1
         line = line[:index-1] + "]" + line[index:]
     return line 
+
+# Driver for index conversion
 def variableIndexConversion(line, variables):
     count = 0
     new_var = []
     for var in variables: 
         if isOnlyVar(var, line): line = bracketize(line, var)
     return line
+
+# Extracts variables from a given line
 def extractVar(line):
     variable = None
     if has(getPyCommentless(line), "if ") and not (len(getPyCommentless(line).strip())-1) == getPyCommentless(line).strip().find(":"):
         variable = line[line.find(":")+1:line.find("=", line.find(":"))].strip()
     elif has(getPyCommentless(line), " = "): variable = getPyCommentless(line).split(" = ")[0].strip()
     return variable
+
+# Runs the conversion for a given file    
 def run(input_file):
     imports = ["import numpy\n"]
     input_gather = []   #List to hold the translated lines
@@ -320,6 +388,7 @@ def run(input_file):
             input_gather.append(line)
 
     output_gather = []
+    
     #Convert all the indicies
     for line in input_gather: 
         to_add = line
