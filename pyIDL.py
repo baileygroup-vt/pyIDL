@@ -412,16 +412,22 @@ if __name__ == "__main__":
     if len(arguments) < 3:
         print("Error: Invalid Number of Command Line Arguments")
     elif len(arguments) >= 3:
-        if arguments[1] == "-f" or aruments[1] == "--singlefile":
+        if arguments[1] == "-f" or arguments[1] == "--singlefile":
+            print(arguments[2] + " translation: Started")
             run(arguments[2])
-        #elif arguments[1] == "-m" or arguments[1] == "--multifile"
-        #    files = arguments.pop(0).pop(0)
-        #    for file in files:
-        #        run(file)
+            print(arguments[2] + " translation: Complete")
+        elif arguments[1] == "-m" or arguments[1] == "--multifile":
+            files = arguments[2:]
+            for file in files:
+                print("---------------------------------------------")
+                print(file + " translation: Started")
+                run(file)
+                print(file + " translation: Complete")
         else:
             print("Error: Invalid Conversion Operator")
 # TO DO
 # fix converting excessive indicies
 # Add command line parsing functionality
-    # Support multi run
     # Support folder run
+
+#Add robustness to multi line 
