@@ -2,8 +2,10 @@
 # This is an experimental program, use with discretion.
 # Author: Gaeron Friedrichs gaeron@vt.edu
 # Advisor: Dr. Scott Bailey
-# Updated: 7.15.18
+# Updated: 7.31.18
 #----------------------------------------------------------#
+import sys
+
 
 # Determines whether a line contains a given statement
 def has(line, statement): return line.find(statement) != -1
@@ -388,7 +390,7 @@ def run(input_file):
             input_gather.append(line)
 
     output_gather = []
-    
+
     #Convert all the indicies
     for line in input_gather: 
         to_add = line
@@ -399,8 +401,27 @@ def run(input_file):
     # Re write the file
     with open(output_file, "w") as python_code:
         for line in output_gather: python_code.write(line)
-def multiRun(input_list): for file in input_list: run(file)
+
+# Runs a list of files        
+def multiRun(input_list): 
+    for file in input_list: 
+        run(file)
 
 if __name__ == "__main__":
-    run("pmc_02_model2b.pro")
-# fix converting excessive 
+    arguments = sys.argv
+    if len(arguments) < 3:
+        print("Error: Invalid Number of Command Line Arguments")
+    elif len(arguments) >= 3:
+        if arguments[1] == "-f" or aruments[1] == "--singlefile":
+            run(arguments[2])
+        #elif arguments[1] == "-m" or arguments[1] == "--multifile"
+        #    files = arguments.pop(0).pop(0)
+        #    for file in files:
+        #        run(file)
+        else:
+            print("Error: Invalid Conversion Operator")
+# TO DO
+# fix converting excessive indicies
+# Add command line parsing functionality
+    # Support multi run
+    # Support folder run
