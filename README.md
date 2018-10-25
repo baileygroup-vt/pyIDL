@@ -15,6 +15,5 @@ Supported Functionality:
 
 
 To-do:
-	Refine the bracketize methodology to not clobber len()->len[]
 	Refine command-line interface for error-handling
 	Refine command-line interface for multiple flags
