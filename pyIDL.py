@@ -318,6 +318,7 @@ def isOnlyVar(var, line):
 
     return False
 
+
 # Changes parenthesis to brackets thouroughly
 def bracketize(line, var):
     loc = -1
@@ -325,9 +326,19 @@ def bracketize(line, var):
     while True:
         loc = getPyCommentless(line).find(var+"(", loc+1)
         if loc == -1: break
-        locations.append(loc)
-    line = line.replace(var+"(", var+"[")
+        if(loc != 0):
+            character_value = ord(line[loc-1])
+            if not ((character_value <= 122 and character_value >= 97) 
+                or (character_value <= 90 and character_value >= 65) 
+                or (character_value <= 57 and character_value >= 48) 
+                or (character_value == 44)
+                or (character_value == 46)
+                or (character_value == 95)):
+                locations.append(loc)
+        else: locations.append(loc)
+
     for loc in locations:
+        line = line.replace(var+"(", var+"[", 1)
         index = loc + 1
         count = 1
         while count != 0:
