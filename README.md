@@ -1,8 +1,13 @@
 # pyIDL
 ## IDL to Python converter. Currently supports a command line interface.
+## Author: Gaeron Friedrichs
+
+### Usage Overview:
+		This program should be used as a tool to jump-start the translation process for projects and 
+	files that are written in IDL. It handles a lot of mundane conversions such as replacing comment 
+	types, for loop styles, primitive whitespace conversion, and math and logical operators.   
 
 ### File Conversion:
-
 	Single File Run
 	 		pyIDL.py -f <filename>
 	 		pyIDL.py --singlefile <filename>
@@ -81,7 +86,8 @@
 	Vector Index Conversion
 	 - IDL supports vector indexing with parenthesis
 	 - Python supports vector indexing with brackets
-	 - This is accomplished by converting all other parts of the file, then recording all the defined variables. The file is written, then read back in and all the variables are searched for and bracketized. 
+	 - This is accomplished by converting all other parts of the file, then recording all the defined variables. 
+	 - The file is written, then read back in and all the variables are searched for and bracketized. 
 	 - vector(2) to vector[2]
 	 - vector1(vector2(3)) to vector1[vector2[3]]
 
@@ -97,7 +103,29 @@
 				code line 2
 					code line 3
 
+	Imports
+	 - The only current import is for numpy. 
+	 - Any further desired imports should be placed in the imports list				
+
+### Not Supported:
+	 - Method/function headers with inputs/outputs
+	 - Return statements
+
+### Quirks:
+	 - Clean, organized IDL code and line spacing will yield the best conversion results
+	 - The code comments out the function header and thus does not process the variables 
+	 that are in that header. In order to bracketize those (potential) vectors, one must
+	 write a line like "variable = input" as a place holder somewhere in the code, so 
+	 the variables are properly bracketized.
+
+### Adding Functionality:
+	This program was created using a minimum-code based approach. A file should be run through
+	the conversion process. Methods and functions should be added to support the conversion of 
+	the desired IDL functionality until it works generally, and for the specific case being 
+	tested against. Performed iteratively, most functionality can be converted.
 
 ### To-do:
 	Refine command-line interface for error-handling
-	Refine command-line interface for multiple flags
+	Command line update for directory running
+	Multiple parameter for loop support
+	Define variables from #pro header
