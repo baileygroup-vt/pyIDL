@@ -107,6 +107,12 @@
 	 - The only current import is for numpy. 
 	 - Any further desired imports should be placed in the imports list				
 
+	 Common Blocks
+	 - Supports conversion of common blocks
+	 - Creates a file filled with global variables and assigns them to none
+	 - The file must be imported and initialized. 
+	 - The variable names in the common blocks cannot be python special names
+
 ### Not Supported:
 	 - Method/function headers with inputs/outputs
 	 - Return statements
@@ -125,7 +131,7 @@
 	tested against. Performed iteratively, most functionality can be converted.
 
 ### To-do:
-	Refine command-line interface for error-handling
-	Command line update for directory running
-	Multiple parameter for loop support
-	Define variables from #pro header
+	 - Refine command-line interface for error-handling
+	 - Command line update for directory running
+	 - Multiple parameter for loop support
+	 - Define variables from #pro header
