@@ -256,6 +256,48 @@ def convertWhere(line, whitespace):
   
     return line.replace("where", "")
 
+
+
+def commonHandle(line):
+    total_line = ""
+    chunks = None
+    if(line.lstrip().find("common") == 0): 
+        seg = line.lstrip()[0:line.lstrip().find(",")]
+        line = line.replace(seg, "def initialize():\n")
+        line = line.replace("$", "")
+        chunks = line.split(",")
+        total_line = chunks.pop(0)
+    if not chunks: chunks = line.replace("$","").split(",")
+    for chunk in chunks:
+        if not chunk.isspace(): 
+            total_line = total_line + "\tglobal " + chunk.lstrip().rstrip() + "\n\t" + chunk.lstrip().rstrip() + " = None \n\n"
+    return total_line
+
+
+def convertLine_prg(line, flag, offset, last_white, original, variables):
+    temp_line = line    # This is just to save a copy of our original line
+    more_var = None     # Default to no additional variables
+    whitespace = len(line) - len(line.lstrip()) # Track whitespace
+    
+    if flag: whitespace = whitespace - offset   # Flag dictates when we start removing whitespace offset
+    return_original = whitespace                # Track original whitespace
+
+    # If there are some inconsistencies, adjust
+    if original != whitespace:
+        while (whitespace-last_white) >= 2 and last_white >= 0:
+            whitespace = whitespace-1
+    else: whitespace = last_white
+    
+                        
+    line = line.lstrip()                    # Remove leading whitespace
+    line = convertComments(line)            # Convert comments from ; to # MUST BE AFTER EQ OP AND thenCONV 
+    line = addLeadingWhitespace(line, whitespace)   # Add back in the proper whitespace
+    
+    if not (isPythonComment(line)): line = commonHandle(line)
+
+    return line, whitespace, return_original, variables   
+
+
 # Main driver for line conversion
 def convertLine(line, flag, offset, last_white, original, variables):
     temp_line = line    # This is just to save a copy of our original line
@@ -365,7 +407,7 @@ def extractVar(line):
     return variable
 
 # Runs the conversion for a given file    
-def run(input_file):
+def run_pro(input_file):
     imports = ["import numpy\n"]
     input_gather = []   #List to hold the translated lines
     variables = []      #List of variables
@@ -385,8 +427,13 @@ def run(input_file):
             input_gather.append(line)
                
     # Convert I/O file extension
-    try: output_file = input_file.replace(".pro", ".py")
-    except: print("Something went wrong with the file name.")
+    if(input_file.find(".pro") != -1):
+        try: output_file = input_file.replace(".pro", ".py")
+        except: print("Something went wrong with the file name.")
+    elif(input_file.find(".prg") != -1):
+        try: output_file = input_file.replace(".prg", ".py")
+        except: print("Something went wrong with the file name.")
+    else: print("No valid file extension.")
 
     # Write to File
     with open(output_file, "w") as python_code:
@@ -413,10 +460,41 @@ def run(input_file):
     with open(output_file, "w") as python_code:
         for line in output_gather: python_code.write(line)
 
+
+def run_prg(input_file):
+    input_gather = []   #List to hold the translated lines
+    variables = []      #List of variables
+    flag = False        #Flag that looks for the first non-commented line
+    last_white = 0      #Last Whitespace
+    offset = 0          #Code whitespace offset
+    original = 0        #Original Whitespace    # Open Input File
+    
+    with open(input_file, "r") as idl_code:
+        for line in idl_code:
+            if line.strip():     
+                if (not flag) and (line.lstrip()[:1] != ";") and (line.lstrip()[:1] != "#"):
+                    flag = True
+                    offset = len(line) - len(line.lstrip())                   
+                line, last_white, original, variables = convertLine_prg(line, flag, offset, last_white, original, variables)
+            input_gather.append(line)
+               
+    # Convert I/O file extension
+    if(input_file.find(".prg") != -1):
+        try: output_file = input_file.replace(".prg", ".py")
+        except: print("Something went wrong with the file name.")
+    else: print("No valid file extension.")
+
+    # Write to File
+    with open(output_file, "w") as python_code:
+        for line in input_gather: python_code.write(line)
+
+
 # Runs a list of files        
 def multiRun(input_list): 
     for file in input_list: 
-        run(file)
+        if(file.find(".pro")!= -1): run_pro(file)
+        else: run_prg(file)
+
 
 if __name__ == "__main__":
     arguments = sys.argv
@@ -425,20 +503,28 @@ if __name__ == "__main__":
     elif len(arguments) >= 3:
         if arguments[1] == "-f" or arguments[1] == "--singlefile":
             print(arguments[2] + " translation: Started")
-            run(arguments[2])
+            if(arguments[2].find(".pro")!= -1): run_pro(arguments[2])
+            else: run_prg(arguments[2])
             print(arguments[2] + " translation: Complete")
         elif arguments[1] == "-m" or arguments[1] == "--multifile":
             files = arguments[2:]
             for file in files:
                 print("---------------------------------------------")
                 print(file + " translation: Started")
-                run(file)
+                if(file.find(".pro")!= -1): run_pro(file)
+                else: run_prg(file)
                 print(file + " translation: Complete")
         else:
             print("Error: Invalid Conversion Operator")
+
+
 # TO DO
-# fix converting excessive indicies
 # Add command line parsing functionality
     # Support folder run
 
 #Add robustness to multi line 
+
+# Common blocks just need to be global variables.
+# assume they are assigned somewhere else
+
+# Add functionality to support importing common blocks
