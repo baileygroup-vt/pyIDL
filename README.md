@@ -113,6 +113,17 @@
 	 - The file must be imported and initialized. 
 	 - The variable names in the common blocks cannot be python special names
 
+	 Accessing Common Blocks
+	 - Accessing a common block assumes the Common Block conversion format
+	 - Converts the @ to an import, and appends the initialization
+	 - Needs each variable to prefixed with "module."
+	 - Example:
+	 	- @sample_common.prg 
+	 	- import sample_common.py
+	 	  sample_common.initialize()
+	 	  sample_common.var = 1
+
+
 ### Not Supported:
 	 - Method/function headers with inputs/outputs
 	 - Return statements
@@ -135,3 +146,5 @@
 	 - Command line update for directory running
 	 - Multiple parameter for loop support
 	 - Define variables from #pro header
+	 - Handle min/max functions (< and >)
+	 - Handle where() with matrix[i,*] conditions
