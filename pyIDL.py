@@ -2,7 +2,7 @@
 # This is an experimental program, use with discretion.
 # Author: Gaeron Friedrichs gaeron@vt.edu
 # Advisor: Dr. Scott Bailey
-# Updated: 7.31.18
+# Updated: 12.16.18
 #----------------------------------------------------------#
 import sys
 
@@ -257,7 +257,6 @@ def convertWhere(line, whitespace):
     return line.replace("where", "")
 
 
-
 def commonHandle(line):
     total_line = ""
     chunks = None
@@ -273,6 +272,13 @@ def commonHandle(line):
             total_line = total_line + "\tglobal " + chunk.lstrip().rstrip() + "\n\t" + chunk.lstrip().rstrip() + " = None \n\n"
     return total_line
 
+def commonBlock(line):
+    if line[0] == "@":
+        block_name = line[1:line.find(".prg")]
+        line = line.replace("@", "import ")
+        line = line.replace(".prg", ".py\n")
+        line = line + block_name + ".initialize()"
+    return line
 
 def convertLine_prg(line, flag, offset, last_white, original, variables):
     temp_line = line    # This is just to save a copy of our original line
@@ -315,6 +321,7 @@ def convertLine(line, flag, offset, last_white, original, variables):
     
                         
     line = line.lstrip()                    # Remove leading whitespace
+    line = commonBlock(line)
     line = convertEqualityOperators(line)   # Convert the equality operators (ge, le, etc.)
     line = removeEndStatements(line)        # Remove the end statements 
     line = convertThenStatements(line, whitespace)  # Remove the then statements and replace with colons 
@@ -335,7 +342,6 @@ def convertLine(line, flag, offset, last_white, original, variables):
     line = addLeadingWhitespace(line, whitespace)   # Add back in the proper whitespace
     
     return line, whitespace, return_original, variables
-#def hasNoPrev(var, line):
 
 # Determine if its only a variable rather than method
 def isOnlyVar(var, line):
@@ -359,7 +365,6 @@ def isOnlyVar(var, line):
             return True
 
     return False
-
 
 # Changes parenthesis to brackets thouroughly
 def bracketize(line, var):
